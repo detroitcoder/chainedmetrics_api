@@ -18,5 +18,17 @@ class Market(db.Model):
     highlight_market = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
-        return f'<metric.Market> {self.ticker} | {self.fiscal_period} | {self.metric}>'
+        return f'<metric.Market> {self.ticker} | {self.fiscal_period} | {self.metric}'
+
+
+class RequestAccess(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    full_name = db.Column(db.String(500))
+    email = db.Column(db.String(100))
+    reason = db.Column(db.String(2000))
+    company = db.Column(db.String(2000))
+
+    def __repr__(self):
+        return f'<metric.RequestAccess> {self.full_name} | {self.email}'
 
