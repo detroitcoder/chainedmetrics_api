@@ -9,6 +9,7 @@ class Production(Config):
     DEVELOPMENT = False
     DEBUG = False
     DB_HOST = 'my.production.database'
+    JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 
 class Development(Config):
     DEVELOPMENT = True
@@ -18,5 +19,7 @@ class Development(Config):
     DB_PORT = 25060
     DATABASE = 'metrics'
     DB_PASS = os.environ['DB_PASS']
+    JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+    JWT_TOKEN_LOCATION = "headers"
 
     SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DATABASE}'
