@@ -17,6 +17,7 @@ class Market(db.Model):
     beat_address = db.Column(db.String)
     beat_price = db.Column(db.Numeric)
     miss_address = db.Column(db.String)
+    broker_address = db.Column(db.String)
     miss_price = db.Column(db.Numeric)
     issued = db.Column(db.Integer)
     highlight_market = db.Column(db.Boolean, nullable=False, default=False)
