@@ -9,8 +9,9 @@ dependencies:
   - attrs=21.2.0=pyhd8ed1ab_0
   - backcall=0.2.0=pyhd3eb1b0_0
   - brotlipy=0.7.0=py39h27cfd23_1003
-  - ca-certificates=2021.5.30=ha878542_0
-  - certifi=2021.5.30=py39hf3d152e_0
+  - ca-certificates=2021.7.5=h06a4308_1
+  - cachetools=4.2.2=pyhd3eb1b0_0
+  - certifi=2021.5.30=py39h06a4308_0
   - cffi=1.14.6=py39h400218f_0
   - chardet=4.0.0=py39h06a4308_1003
   - click=8.0.1=pyhd3eb1b0_0
@@ -46,7 +47,7 @@ dependencies:
   - matplotlib-inline=0.1.2=pyhd3eb1b0_2
   - mistune=0.8.4=py39h3811e60_1004
   - ncurses=6.2=he6710b0_1
-  - openssl=1.1.1k=h7f98852_0
+  - openssl=1.1.1l=h7f8727e_0
   - parso=0.8.2=pyhd3eb1b0_0
   - pexpect=4.8.0=pyhd3eb1b0_3
   - pickleshare=0.7.5=pyhd3eb1b0_1003
