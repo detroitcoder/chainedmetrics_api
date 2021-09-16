@@ -1,4 +1,7 @@
-from flask import Blueprint, jsonify, request, Response
+import requests
+import os
+
+from flask import Blueprint, jsonify, request, current_app
 from datetime import timedelta
 from flask_jwt_extended import create_access_token, current_user, jwt_required
 from flask_jwt_extended import JWTManager
@@ -187,12 +190,90 @@ def request_access():
     
     if email and full_name:
 
-        request_access = RequestAccess(full_name=full_name, email=email, reason=reason, company=company)
-        db.session.add(request_access)
-        db.session.commit()
-        
-        return jsonify(dict(message='Success'))
+        email_subscription = subscribe_to_mailchimp(email)
+        if email_subscription is True:
+            request_access = RequestAccess(full_name=full_name, email=email, reason=reason, company=company)
+            db.session.add(request_access)
+            db.session.commit()
+            
+            return jsonify(dict(message='Success'))
+        else:
+            return jsonify(dict(message=email_subscription)), 400
     
     else:
 
         return jsonify(dict(message='Email and Full Name must be filled out.')), 400
+
+
+@auth_bp.route('/subscribe', methods=['POST'])
+def subscribe():
+    '''
+    Endpoint for subscribing to the newsletter using MailChimp
+
+    Subscribes to MailChimp NewsLetter from Chained Metrics team
+    ---
+    requestBody:
+        description: Information about the user that is requesting access
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        email:
+                            required: true
+                            type: string
+
+    responses:
+        200:
+            description: Success Response
+        400:
+            description: Validation error on arguments. See Response
+    '''
+
+    email = request.json.get('email')
+    
+    if not email:
+        return jsonify(dict(message="Email is missing"))
+    else:
+        subscription_result = subscribe_to_mailchimp(email)
+
+        if subscription_result is True:
+            return jsonify(dict(message="Success")), 200
+        else:
+            return jsonify(dict(message=subscription_result)), 400
+   
+
+def subscribe_to_mailchimp(email):
+    '''
+    Adds a user's email to the Mail Chimp News letter
+
+    Args:
+        email (str): The email to Add
+    
+    Returns:
+        result (True or Error msg): True if successful or a string of an error message
+    '''
+
+    mailchimp_url = '{url}/lists/{list}/members'.format(
+        url=current_app.config['MAILCHIMP_URL'],
+        list=current_app.config['MAILCHIMP_LIST']
+    )
+
+    r = requests.post(
+        mailchimp_url,
+        auth=('key', current_app.config['MAILCHIMP_API_KEY']),
+        json=dict(
+            email_address=email,
+            status='subscribed'
+        ),
+        timeout=1
+    )
+
+    if r.status_code < 300:
+        return True
+    else:
+        data = r.json()
+        if 'detail' in data:
+            return data['detail']
+        else:
+            return 'Unable to subscribe at this time, please try again later'
