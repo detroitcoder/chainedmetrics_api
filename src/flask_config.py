@@ -4,12 +4,16 @@ class Config(object):
     DEBUG = True
     CHAINEDMETRICS_ENV = os.environ.get('CHAINEDMETRICS_ENV', 'Development')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    MAILCHIMP_URL = 'https://us5.api.mailchimp.com/3.0'
+    MAILCHIMP_LIST = '10165fe090'
+    MAILCHIMP_API_KEY = os.environ['MAILCHIMP_API_KEY']
 
 class Production(Config):
     DEVELOPMENT = False
     DEBUG = False
     DB_HOST = 'my.production.database'
     JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+    JWT_TOKEN_LOCATION = 'headers'
 
 class Development(Config):
     DEVELOPMENT = True
