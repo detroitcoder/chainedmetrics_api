@@ -8,6 +8,12 @@ class Config(object):
     MAILCHIMP_LIST = '10165fe090'
     MAILCHIMP_API_KEY = os.environ['MAILCHIMP_API_KEY']
 
+    MAIL_SERVER = 'smtp.gmail.com'
+    MAIL_PORT = 465
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = 'serviceaccount@chainedmetrics.com'
+    MAIL_PASSWORD = os.environ['GMAIL_PASS']
+
 class Production(Config):
     DEVELOPMENT = False
     DEBUG = False
@@ -18,6 +24,7 @@ class Production(Config):
     DB_PASS = os.environ['DB_PASS']
     JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
     JWT_TOKEN_LOCATION = "headers"
+    URL = 'https://chainedmetrics.com'
 
     SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DATABASE}'
 
@@ -31,5 +38,6 @@ class Development(Config):
     DB_PASS = os.environ['DB_PASS']
     JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
     JWT_TOKEN_LOCATION = "headers"
+    URL = 'https://dev.chainedmetrics.com'
 
     SQLALCHEMY_DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DATABASE}'

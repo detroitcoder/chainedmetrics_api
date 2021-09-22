@@ -9,6 +9,9 @@ name: chainedmetrics-api-dev
 region: nyc
 services:
 - cors:
+    allow_headers:
+    - content-type
+    - Access-Control-Allow-Origin
     allow_methods:
     - GET
     - POST
@@ -18,9 +21,7 @@ services:
     - prefix: http://localhost:3000
     - prefix: https://dev.chainedmetrics.com
     - prefix: https://chained-metrics-dev.web.app
-    allow_headers:
-    - content-type
-    - Access-Control-Allow-Origin
+    - prefix: https://chainedmetrics.com
   dockerfile_path: Dockerfile
   envs:
   - key: DB_PASS
@@ -34,6 +35,10 @@ services:
     scope: RUN_AND_BUILD_TIME
     type: SECRET
     value: EV[1:IUYabgwKB3RE9WCzpJzCQUcUdT1cxjNf:4KhS56CiRkTWHrpzZhnUiYXeDBqa5HnHP0unAmeorJmsG11QGApFjOqQzvUWbum9Tr4Ujw==]
+  - key: MAILCHIMP_API_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:QuiE786jSb9WfuqVCM4r624gQtWtlllY:h19Vx2GGQz/hDGokp6X8XFtBWej/yg+xrOx6MnWDR9rvR7+PjSDoYZZVwEgWXun/9TOksw==]
   github:
     branch: development
     deploy_on_push: true
@@ -45,3 +50,4 @@ services:
   routes:
   - path: /
   source_dir: /
+  
