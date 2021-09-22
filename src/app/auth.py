@@ -3,10 +3,12 @@ import os
 
 from flask import Blueprint, jsonify, request, current_app
 from datetime import timedelta
-from flask_jwt_extended import create_access_token, current_user, jwt_required
+from flask_jwt_extended import create_access_token, current_user, jwt_required, decode_token
+from jwt.exceptions import ExpiredSignatureError, DecodeError, InvalidTokenError
 from flask_jwt_extended import JWTManager
 
 from .models import RequestAccess, User, db
+from .utilities import send_verification_email, send_resetpassword_email
 
 
 jwt = JWTManager()
@@ -16,7 +18,7 @@ auth_bp = Blueprint('auth', __name__)
 def user_lookup_callback(_jwt_header, jwt_data):
 
     email = jwt_data["sub"]
-    return User.query.filter_by(email=email).one_or_none()
+    return User.query.filter_by(email=email, active=True).one_or_none()
 
 @jwt.expired_token_loader
 def exipred_token_callback(jwt_header, jwt_payload):
@@ -93,12 +95,12 @@ def user():
     )
 
 @auth_bp.route('/user', methods=['POST'])
-@jwt_required()
 def add_user():
     '''
-    REQUIRES ADMIN PRIVLEGES FOR TESTING ONLY: Endpoint to create a new user
+    Requests to add a user and if the payload is correct an email is sent to the user which requires them to verify
+    the email address.
 
-    Enables programatic access to create new users. Must be authenticated with a user with admin privleges
+    Used to initially create the account
     ---
     requestBody:
         required: true
@@ -116,10 +118,6 @@ def add_user():
                             type: string
                         last_name:
                             type: string
-                        admin:
-                            type: boolean
-    security:
-        - bearerAuth: []
     responses:
         200:
             description: Success message
@@ -129,28 +127,190 @@ def add_user():
             description: Not an Admin user
     '''
 
-    if not current_user.admin:
-        return jsonify(message="User does not have admin privleges to create users"), 401
+    email = request.json.get('email').lower().strip()
+    first_name = request.json.get('first_name')
+    last_name = request.json.get('last_name')
+    password = request.json.get('password')
 
+    if not all((email, first_name, last_name, password)):
+        return jsonify(message="All required arguments must be filled out"), 400
+    elif User.query.filter_by(email=email).one_or_none():
+        return jsonify(message="An account with this email already exists"), 400
     else:
-        email = request.json.get('email')
-        admin = request.json.get('admin')
-        first_name = request.json.get('first_name')
-        last_name = request.json.get('last_name')
-        password = request.json.get('password')
-
-        if not all((email, first_name, last_name, password)):
-            return jsonify(message="All required arguments must be filled out"), 400
-        elif admin not in (True, False):
-            return jsonify(message="All required arguments must be filled out"), 400
-
-        user = User(email=email, admin=admin, active=True, first_name=first_name, last_name=last_name)
+        user = User(email=email, admin=False, active=False, first_name=first_name, last_name=last_name)
         user.set_password(password)
 
         db.session.add(user)
         db.session.commit()
 
-        return jsonify(message='Success')
+        verify_token = create_access_token(identity=email, expires_delta=timedelta(days=1))
+        send_verification_email(email, verify_token)
+
+        return jsonify(message=f'Email verification sent to {email}')
+
+@auth_bp.route('/verifyuser', methods=['POST'])
+def verify_user():
+    '''
+    Used to verify a user after they authenticate validate their email address. They were given a token that lasts for 24 hours
+    and if this token is returned to this API it will return a 200 and a valid JWT token just like the one returned
+    from the login endpoint
+
+    Verifies the user's email is accurate and activates the user
+    ---
+    requestBody:
+        required: true
+        description: The token body
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        verifytoken:
+                            type: string
+    responses:
+        200:
+            description: Success message with the JWT token
+        400:
+            description: Verify token is not found in the payload
+        404:
+            description: There is not a user registered for this email yet. Possibly malicious
+        410:
+            description: The user already verified this account but is valid
+        403:
+            description: The token is expired or invalid. See message
+    '''
+
+    verifytoken = request.json.get('verifytoken')
+    if not verifytoken:
+        return jsonify(message="verifytoken is missing"), 400
+
+    try:
+        email = decode_token(verifytoken)['sub']
+
+        access_token = create_access_token(
+            identity=email,
+            expires_delta=timedelta(days=7)
+        )
+
+        user = User.query.filter_by(email=email).one_or_none()
+        if not user:
+            return jsonify('No registered user for this email'), 404
+        elif user.active:
+            return jsonify('User has has already activated account'), 410
+        else:
+
+            user.active = True
+            db.session.commit()
+
+            return jsonify(dict(message='Success', access_token=access_token))
+    
+    except ExpiredSignatureError:
+        return jsonify(message='Expired verifytoken'), 403
+    except (DecodeError, InvalidTokenError):
+        return jsonify(message='Invalied verifytoken'), 403  
+
+@auth_bp.route('/forgotpassword', methods=['POST'])
+def forgot_password():
+    '''
+    Requests an email to be sent to request a password reset
+
+    Sends an email to reset the password to the email if it exists
+    ---
+    requestBody:
+        required: true
+        description: The token body
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        email:
+                            type: string
+    responses:
+        200:
+            description: Success confirmation that the email is
+        400:
+            description: Verify token is not found in the payload
+    '''
+
+    email = request.json.get('email').lower().strip()
+    if not email:
+        return jsonify(message="Email is missing"), 400
+
+    user = User.query.filter_by(email=email).one_or_none()
+    if not user:
+        print('No User found')
+        pass
+    else:
+        ('email sent')
+        reset_token = create_access_token(identity=email, expires_delta=timedelta(hours=1))
+        send_resetpassword_email(email, reset_token)
+        
+    return jsonify(message="If the email exists, a reset password link has been sent")
+
+
+@auth_bp.route('/resetpassword', methods=['POST'])
+def reset_password():
+    '''
+    Endpoint to reset the password. It requires both the token and the new password and runs validation on both. If successful it returns the valid JWT token
+
+    Checks if the reset password is valid and if so resets the password to the new password
+    ---
+    requestBody:
+        required: true
+        description: The token body
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        resettoken:
+                            type: string
+                        password:
+                            type: string
+    responses:
+        200:
+            description: Success message with the JWT token
+        400:
+            description: Verify token is not found in the payload
+        404:
+            description: There is not a user registered for this email yet. Possibly malicious
+        410:
+            description: The user already verified this account but is valid
+        403:
+            description: The token is expired or invalid. See message
+    '''
+
+    resettoken = request.json.get('resettoken')
+    password = request.json.get('password')
+
+    if not resettoken:
+        return jsonify(message="resettoken is missing"), 400
+    elif not password:
+        return jsonify(message="missing password")
+
+    try:
+        email = decode_token(resettoken)['sub']
+
+        user = User.query.filter_by(email=email).one_or_none()
+        if not user:
+            return jsonify('No registered user for this email'), 404
+        else:
+            user.set_password(password)
+            db.session.commit()
+
+            access_token = create_access_token(
+                identity=email,
+                expires_delta=timedelta(days=7)
+            )
+
+            return jsonify(message='Success', token=access_token)
+    
+    except ExpiredSignatureError:
+        return jsonify(message='Expired verifytoken'), 403
+    except (DecodeError, InvalidTokenError):
+        return jsonify(message='Invalied verifytoken'), 403 
+
 
 @auth_bp.route('/requestaccess', methods=['POST'])
 def request_access():

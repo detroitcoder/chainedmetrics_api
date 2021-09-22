@@ -4,11 +4,12 @@ from flask import Flask, json, jsonify
 from flasgger import Swagger
 from flask_migrate import Migrate
 from flask_jwt_extended.exceptions import NoAuthorizationError
+from flask_mail import Mail
 
 from .markets import markets_bp
 from .auth import auth_bp, jwt
 from .models import db
-from .utilities import CustomJSONEncoder, SWAGGER_TEMPLATE
+from .utilities import CustomJSONEncoder, SWAGGER_TEMPLATE, mail
 
 
 app = Flask(__name__)
@@ -22,6 +23,8 @@ swagger = Swagger(app, template=SWAGGER_TEMPLATE)
 
 db.init_app(app)
 jwt.init_app(app)
+mail.init_app(app)
+
 migrate = Migrate()
 migrate.init_app(app, db)
 
