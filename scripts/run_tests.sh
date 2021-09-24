@@ -11,4 +11,4 @@ docker run \
  -w /src/chainedmetrics_api/src \
  --entrypoint /opt/conda/bin/conda \
  test:$tag \
- run --no-capture-output -n app python -m unittest tests
+ run --no-capture-output -n app pytest
