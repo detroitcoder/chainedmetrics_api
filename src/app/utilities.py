@@ -85,8 +85,8 @@ def subscribe_to_mailchimp_async(email):
     Args:
         email (str): The email to signup with
     '''
-    
-    Thread(target=send_async_email, args=(email,)).start()
+
+    Thread(target=subscribe_to_mailchimp, args=(email,)).start()
 
 
 def subscribe_to_mailchimp(email):
