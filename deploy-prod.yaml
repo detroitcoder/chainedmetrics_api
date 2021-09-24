@@ -1,0 +1,51 @@
+alerts:
+- rule: DEPLOYMENT_FAILED
+- rule: DOMAIN_FAILED
+domains:
+- domain: api.chainedmetrics.com
+  type: PRIMARY
+  zone: chainedmetrics.com
+name: chainedmetrics-api
+region: nyc
+services:
+- cors:
+    allow_headers:
+    - content-type
+    - Access-Control-Allow-Origin
+    allow_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    allow_origins:
+    - prefix: http://localhost:3000
+    - prefix: https://chained-metrics-dev.web.app
+    - prefix: https://chainedmetrics.com
+  dockerfile_path: Dockerfile
+  envs:
+  - key: CHAINEDMETRICS_ENV
+    scope: RUN_AND_BUILD_TIME
+    value: Production
+  - key: DB_PASS
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:oL9RznBP04XtV0A4v0QZIICLbD4hE0iU:+mnWEsYZA6TgLsT3AdP4/Va+Ag+SN+PxoqAgDUmbOGc=]
+  - key: MAILCHIMP_API_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:Gz0OK0yc1CmrJ/Wo1Mz2jtRnNmqlfbJU:lRiGqqvH1/nz7eQtPOiNLde1PWZEerTKyvTloMnWtrWjWbOsNufjnJw6Z+oEryAA0Ti2IQ==]
+  - key: JWT_SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:hNFG6i2Bq25K1knNEAmxmcImLQMOhbto:y4OKwwcCjj0bGjvU3AhXhOZjfyyq5BfbsGCTFoWBDLvfZeKq]
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: detroitcoder/chainedmetrics_api
+  http_port: 5050
+  instance_count: 1
+  instance_size_slug: basic-xs
+  name: chainedmetrics-api
+  routes:
+  - path: /
+  source_dir: /

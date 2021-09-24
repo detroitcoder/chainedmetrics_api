@@ -6,4 +6,4 @@ COPY src /src/
 WORKDIR /src/
 EXPOSE 5050
 
-CMD ["conda", "run", "--no-capture-output", "-n", "app",  "gunicorn", "-c", "gunicorn_config.py", "app:app"]
+CMD ["conda", "run", "--no-capture-output", "-n", "app",  "gunicorn", "-c", "gunicorn_config.py", "wsgi"]
