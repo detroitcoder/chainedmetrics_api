@@ -1,4 +1,3 @@
-import requests
 import os
 
 from flask import Blueprint, jsonify, request, current_app
@@ -8,7 +7,8 @@ from jwt.exceptions import ExpiredSignatureError, DecodeError, InvalidTokenError
 from flask_jwt_extended import JWTManager
 
 from .models import RequestAccess, User, db
-from .utilities import send_verification_email, send_resetpassword_email
+from .utilities import (send_verification_email, send_resetpassword_email, 
+                            subscribe_to_mailchimp_async, subscribe_to_mailchimp)
 
 
 jwt = JWTManager()
@@ -145,6 +145,7 @@ def add_user():
 
         verify_token = create_access_token(identity=email, expires_delta=timedelta(days=1))
         send_verification_email(email, verify_token)
+        subscribe_to_mailchimp_async(email)
 
         return jsonify(message=f'Email verification sent to {email}')
 
@@ -402,38 +403,3 @@ def subscribe():
         else:
             return jsonify(dict(message=subscription_result)), 400
    
-
-def subscribe_to_mailchimp(email):
-    '''
-    Adds a user's email to the Mail Chimp News letter
-
-    Args:
-        email (str): The email to Add
-    
-    Returns:
-        result (True or Error msg): True if successful or a string of an error message
-    '''
-
-    mailchimp_url = '{url}/lists/{list}/members'.format(
-        url=current_app.config['MAILCHIMP_URL'],
-        list=current_app.config['MAILCHIMP_LIST']
-    )
-
-    r = requests.post(
-        mailchimp_url,
-        auth=('key', current_app.config['MAILCHIMP_API_KEY']),
-        json=dict(
-            email_address=email,
-            status='subscribed'
-        ),
-        timeout=1
-    )
-
-    if r.status_code < 300:
-        return True
-    else:
-        data = r.json()
-        if 'detail' in data:
-            return data['detail']
-        else:
-            return 'Unable to subscribe at this time, please try again later'
