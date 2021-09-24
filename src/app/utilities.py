@@ -1,5 +1,6 @@
 import decimal
 import json
+import requests
 
 from threading import Thread
 from datetime import date, datetime
@@ -75,6 +76,53 @@ def send_resetpassword_email(email, token):
     )
 
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+
+
+def subscribe_to_mailchimp_async(email):
+    '''
+    Async call to subscribe to Mailchimp with the email which happens when a user signs up
+
+    Args:
+        email (str): The email to signup with
+    '''
+    
+    Thread(target=send_async_email, args=(email,)).start()
+
+
+def subscribe_to_mailchimp(email):
+    '''
+    Adds a user's email to the Mail Chimp News letter
+
+    Args:
+        email (str): The email to Add
+    
+    Returns:
+        result (True or Error msg): True if successful or a string of an error message
+    '''
+
+    mailchimp_url = '{url}/lists/{list}/members'.format(
+        url=current_app.config['MAILCHIMP_URL'],
+        list=current_app.config['MAILCHIMP_LIST']
+    )
+
+    r = requests.post(
+        mailchimp_url,
+        auth=('key', current_app.config['MAILCHIMP_API_KEY']),
+        json=dict(
+            email_address=email,
+            status='subscribed'
+        ),
+        timeout=1
+    )
+
+    if r.status_code < 300:
+        return True
+    else:
+        data = r.json()
+        if 'detail' in data:
+            return data['detail']
+        else:
+            return 'Unable to subscribe at this time, please try again later'
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
