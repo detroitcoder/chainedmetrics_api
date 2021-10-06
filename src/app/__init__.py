@@ -43,6 +43,7 @@ def create_app(testing_config=None):
 
     app.register_blueprint(markets_bp, url_prefix='/markets')
     app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.url_map.strict_slashes = False
 
 
     @app.errorhandler(500)
