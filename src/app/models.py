@@ -22,6 +22,8 @@ class Market(db.Model):
     issued = db.Column(db.Integer)
     highlight_market = db.Column(db.Boolean, nullable=False, default=False)
     resolved_value = db.Column(db.Numeric)
+    metric_symbol = db.Column(db.String)
+    expected_reporting_date = db.Column(db.Date)
 
     def __repr__(self):
         return f'<metric.Market> {self.ticker} | {self.fiscal_period} | {self.metric}'

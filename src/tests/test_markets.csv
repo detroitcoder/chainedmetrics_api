@@ -1,4 +1,4 @@
-id,closed,fiscal_period,metric,ticker,value_string,value,beat_address,beat_price,miss_address,broker_address,miss_price,issued,resolved_value,highlight_market
-1,False,"""FQ1 2022""","""Revenue""","""AMZN""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,1100000000,False
-2,False,"""FQ1 2022""","""Revenue""","""GOOG""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,,False
-3,False,"""FQ2 2022""","""Global Subscribers""","""NFLX""","""2.3 M""",2300000,"""XYZ""",0,"""ABC""","""123""",0,10,,True
+id,closed,fiscal_period,metric,ticker,value_string,value,beat_address,beat_price,miss_address,broker_address,miss_price,issued,resolved_value,highlight_market,metric_symbol,expected_reporting_date
+3,False,"""FQ2 2022""","""Global Subscribers""","""NFLX""","""2.3 M""",2300000,"""XYZ""",0,"""ABC""","""123""",0,10,,True,"""NFLX/Q222/GS""",2021-12-31
+2,False,"""FQ1 2022""","""Revenue""","""GOOG""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,,False,"""GOOG/Q122/R""",2021-12-31
+1,False,"""FQ1 2022""","""Revenue""","""AMZN""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,1100000000,False,"""AMZN/Q122/R""",2021-12-31

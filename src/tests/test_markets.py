@@ -1,8 +1,11 @@
 import os
 import csv
+import pytest
+
+from dateutil import parser
 from app.markets import get_markets
 
-import pytest
+
 
 from app import create_app
 from app.models import db, Market
@@ -92,8 +95,17 @@ def get_test_markets():
     with open(os.path.join(dir_path, 'test_markets.csv')) as csv_fil:
         
         headers = [h.strip() for h in csv_fil.readlines(1)[0].split(',')]
+        date_indices = [i for i, h in enumerate(headers) if h in ('expected_reporting_date')]
         for row in csv.reader(csv_fil, quotechar='"'):
-            values = [None if not v else eval(v.strip()) for v in row]
+            values = []
+            for i, v in enumerate(row):
+                if not v:
+                    values.append(None)
+                elif i in date_indices:
+                    values.append(parser.parse(v.strip()).date())
+                else:
+                    values.append(eval(v.strip()))
+
             row_dict = dict(zip(headers,values))
             row_dict = {k:v for k, v in row_dict.items() if v is not None}
 
