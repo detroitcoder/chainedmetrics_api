@@ -57,7 +57,7 @@ def login():
     email = request.json.get('email')
     password = request.json.get('password')
 
-    user = User.query.filter_by(email=email).one_or_none()
+    user = User.query.filter_by(email=email.lower()).one_or_none()
 
     if not user or not user.check_password(password):
         return jsonify(dict(message='Wrong username or password')), 401
