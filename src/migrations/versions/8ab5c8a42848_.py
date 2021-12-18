@@ -24,7 +24,7 @@ def upgrade():
     sa.Column('fiscal_period', sa.String(), nullable=False),
     sa.Column('metric', sa.String(), nullable=False),
     sa.Column('ticker', sa.String(), nullable=False),
-    sa.Column('value_string', sa.String(), nullable=False),
+    sa.Column('value_string', sa.String()),
     sa.Column('value', sa.Numeric(), nullable=True),
     sa.Column('beat_address', sa.String(), nullable=True),
     sa.Column('beat_price', sa.Numeric(), nullable=True),
