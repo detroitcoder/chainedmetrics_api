@@ -1,4 +1,5 @@
 from sqlalchemy.sql.expression import null
+from sqlalchemy import CheckConstraint
 from flask_sqlalchemy import SQLAlchemy
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,6 +25,16 @@ class Market(db.Model):
     resolved_value = db.Column(db.Numeric)
     metric_symbol = db.Column(db.String)
     expected_reporting_date = db.Column(db.Date)
+    high = db.Column(db.Numeric)
+    high_string = db.Column(db.String)
+    low = db.Column(db.Numeric)
+    low_string = db.Column(db.String)
+    
+    CheckConstraint(
+        '''(high is not null and high_string is not null and low is not null and low_string is not null and value is null and value_string is null) 
+        OR (value_string is not null and value is not null and high is null and high_string is null and low is null and low_string is null)''',
+        'binary_vs_scalar_check'
+        )
 
     def __repr__(self):
         return f'<metric.Market> {self.ticker} | {self.fiscal_period} | {self.metric}'
