@@ -114,6 +114,7 @@ def get_markets():
     '''
 
     markets = Market.query.all()
+    markets = Market.query.filter(Market.beat_address.isnot(None)).all()
     markets = [{k: v for k, v in row.__dict__.items() if not k.startswith('_')} for row in markets]
 
     return markets

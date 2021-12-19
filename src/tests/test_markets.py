@@ -48,10 +48,20 @@ def test_basic_request(client):
 
     resp = client.get('/markets/')
 
-    assert len(resp.json['markets']) == 3, 'Three markets are expected'
     for k in ('ticker', 'fiscal_period', 'id', 'metric', 'value', 'value_string', 'broker_address'):
         for m in resp.json['markets']:
             assert k in m, f'{k} is missing from {m}'
+
+def test_missing_broker_address_are_skipped(client):
+    """Ensure that the test case for "AMZN/Q322/R" is not returned by
+     the markets call because the broker address is missing
+     """
+
+    resp = client.get('/markets/')
+
+    assert len(resp.json['markets']) == 3, 'Three markets are expected'
+    for m in resp.json['markets']:
+        assert m['metric_symbol'] != "AMZN/Q322/R"
 
 def test_market_resolution_without_market(client):
     """Request markets"""
