@@ -91,7 +91,9 @@ def user():
         first_name=current_user.first_name,
         last_name=current_user.last_name,
         active=current_user.active,
-        created_on=current_user.created_on
+        created_on=current_user.created_on,
+        matic_recieved=current_user.matic_recieved,
+        matic_recieved_date=current_user.matic_recieved_date
     )
 
 @auth_bp.route('/user', methods=['POST'])

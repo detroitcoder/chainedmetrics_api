@@ -1,5 +1,6 @@
 from sqlalchemy.sql.expression import null
 from sqlalchemy import CheckConstraint
+from sqlalchemy.sql.schema import ForeignKey
 from flask_sqlalchemy import SQLAlchemy
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,7 +14,7 @@ class Market(db.Model):
     fiscal_period = db.Column(db.String, nullable=False)
     metric = db.Column(db.String, nullable=False)
     ticker = db.Column(db.String, nullable=False)
-    value_string = db.Column(db.String, nullable=False)
+    value_string = db.Column(db.String, nullable=True)
     value = db.Column(db.Numeric)
     beat_address = db.Column(db.String)
     beat_price = db.Column(db.Numeric)
@@ -61,7 +62,9 @@ class User(db.Model):
     last_name = db.Column(db.Text, nullable=False)
     active = db.Column(db.Boolean, nullable=False)
     created_on = db.Column(db.DateTime, nullable=True)
-
+    address = db.Column(db.String, nullable=True)
+    matic_recieved = db.Column(db.Numeric, nullable=True)
+    matic_recieved_date = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         """Create hashed password."""
@@ -78,3 +81,13 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User {}>'.format(self.email)
+class MaticFaucetQueue(db.Model):
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    email = db.Column(db.Text, db.ForeignKey('user.email'), nullable=False, unique=True)
+    address = db.Column(db.String, nullable=False)
+    error_msg = db.Column(db.Text, nullable=True)
+    error_time = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f'<MaticFaucet for {self.email} Address: {self.address}>'
