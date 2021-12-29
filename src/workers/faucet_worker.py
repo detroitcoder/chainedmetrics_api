@@ -4,6 +4,9 @@ import traceback
 import brownie
 import os
 import json
+import logging
+import sys
+
 
 DEV_ADDRESS = '0x3BEBd505f2418ba2Fac94110F4E1D76b01B262a7'
 PROD_ADDRESS = '0x35FE7a74668EC648038E615659710f140e591B82'
@@ -30,11 +33,12 @@ def clear_queue(connection):
             cursor.execute('ROLLBACK TRANSACTION;')
             return
         try:
+            logging.info(f'Processing {id} {email}')
             success, msg, transfer_quantity = process_row(id, email, address)
         except Exception as e:
             success = False
             msg = traceback.format_exc()
-            print(msg)
+            logging.exception(f"Error processing row for {id} {email} {address}")
         
         if success:
             update_user_and_delete_row(cursor, id, email, transfer_quantity)
@@ -148,51 +152,56 @@ def update_row_with_error(cursor, id, msg):
     )
 
 def handle_notify():
-    print('handle notify')
+    logging.info('handle notify')
 
     try:
         conn.poll()
     except psycopg2.OperationalError as e:
-        print('Saw error, clearing queue, and exiting')
+        logging.exception('Saw error, clearing queue, and exiting')
         clear_queue(conn)
         return
 
     for notify in conn.notifies:
-        print('n')
         clear_queue(conn)
 
     conn.notifies.clear()   
-    print('ended')
+    logging.info('Exiting notification handling')
 
 if __name__ == "__main__":
 
-# dbname should be the same for the notifying process
+    logging.basicConfig(
+        stream=sys.stdout, level=logging.INFO,
+        format='%(asctime)s.%(msecs)03d %(levelname)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    logging.info("Starting Worker and Connecting to Database")
+    # dbname should be the same for the notifying process
     conn = psycopg2.connect(
         host="chainedmetrics-dev-do-user-9754357-0.b.db.ondigitalocean.com", 
         port=25060,
         dbname="metrics", 
         user="flask_app", 
-        password="foga2xjyyivvow5c"
+        password=os.getenv("DB_PASS")
     )
 
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
-    print('Loading project and connecting to network')
+    logging.info('Loading project and connecting to network')
     brownie.project.load('.', 'MaticFaucetProject')
     brownie.network.connect('polygon-main')
-    print('Clearing queue')
+    logging.info('Clearing queue')
     clear_queue(conn)
 
-    print('Queue cleared')
+    logging.info('Queue cleared')
 
     cursor = conn.cursor()
     cursor.execute(f"LISTEN faucet_request;")
 
-    print('Starting server')
+    logging.info('Starting server')
     loop = asyncio.get_event_loop()
     loop.add_reader(conn, handle_notify)
     try:
         loop.run_forever()
     except Exception:
-        print('Closing Connection')
+        logging.exception('Closing Connection')
         conn.close()
