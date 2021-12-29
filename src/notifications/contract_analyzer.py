@@ -26,7 +26,6 @@ def open_orders(broker):
 
     Arguments:
         broker (brownie.Contract): A broker for a given exchange
-        max_depth (int): The max depth of the order book at a given price
     
     Returns:
         orders (dict): Open orders for each beat/miss at each price including with
@@ -66,10 +65,13 @@ def issued_tokens(token_address):
     Returns what addresses own the corresponding tokens and how much
 
     Arguments:
-        token (brownie.Contract): The token that has been issued
+        token_address (string): The address for the token
     
     Returns:
         owners (dict): A dictionary of addresses and the quantity owned
+
+    Notes:
+        Cannot hit this endpoint more thean 5x/second
     '''
 
     logging.info(f'Getting Issuances for {token_address}')
