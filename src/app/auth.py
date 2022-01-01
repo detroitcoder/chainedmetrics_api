@@ -8,7 +8,7 @@ from flask_jwt_extended import JWTManager
 
 from .models import RequestAccess, User, db
 from .utilities import (send_verification_email, send_resetpassword_email, 
-                            subscribe_to_mailchimp_async, subscribe_to_mailchimp)
+                            subscribe_to_mailchimp_async)
 
 
 jwt = JWTManager()
@@ -313,59 +313,6 @@ def reset_password():
         return jsonify(message='Expired verifytoken'), 403
     except (DecodeError, InvalidTokenError):
         return jsonify(message='Invalied verifytoken'), 403 
-
-
-@auth_bp.route('/requestaccess', methods=['POST'])
-def request_access():
-    '''
-    Endpoint for requesting access to the Exchange UI
-
-    This endpoint is used to request access to chainedmetrics.com
-    ---
-    requestBody:
-        description: Information about the user that is requesting access
-        content:
-            application/json:
-                schema:
-                    type: object
-                    properties:
-                        email:
-                            required: true
-                            type: string
-                        full_name:
-                            required: true
-                            type: string
-                        reason:
-                            type: string
-                        company:
-                            type: string
-    responses:
-        200:
-            description: Success Response
-        400:
-            description: Validation error on arguments. See Response
-    '''
-
-    full_name = request.json.get('full_name')
-    email = request.json.get('email')
-    reason = request.json.get('reason')
-    company = request.json.get('company')
-    
-    if email and full_name:
-
-        email_subscription = subscribe_to_mailchimp(email)
-        if email_subscription is True:
-            request_access = RequestAccess(full_name=full_name, email=email, reason=reason, company=company)
-            db.session.add(request_access)
-            db.session.commit()
-            
-            return jsonify(dict(message='Success'))
-        else:
-            return jsonify(dict(message=email_subscription)), 400
-    
-    else:
-
-        return jsonify(dict(message='Email and Full Name must be filled out.')), 400
 
 
 @auth_bp.route('/subscribe', methods=['POST'])
