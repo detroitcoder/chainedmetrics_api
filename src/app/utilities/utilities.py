@@ -1,6 +1,7 @@
 import decimal
 import json
 import requests
+import os
 
 from threading import Thread
 from datetime import date, datetime
@@ -42,6 +43,42 @@ def send_verification_email(email, token):
         '<p><a href="{verify_url}">Click here</a> to verify your email and begin trading KPIs! This link expires in 24 hours.</p>'
         f'<p>{verify_url}</p>'
     )
+
+    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+
+def test_message(email):
+    '''
+    Sends an email for verification of the email address when signing up
+
+    Args:
+        email (str): The email to send to
+        token (str): The JWT token created for this verificaiton
+
+    Returns:
+        None
+    '''
+    msg = Message()
+
+    msg.subject = "Verify Chained Metrics Email"
+    msg.recipients = [email]
+    msg.sender = 'serviceaccount@chainedmetrics.com'
+
+    template_path = os.path.join(os.path.dirname(__file__), 'templates', 'email-verification.html')
+    with open(template_path) as fil:
+        html = fil.read()
+
+    msg.html = html
+
+    image_name = 'chained-metrics-light.png'
+    image_location = os.path.join(os.path.dirname(__file__), 'templates', 'images', image_name)
+    with open(image_location, 'rb') as fil:
+        image_content = fil.read()
+
+    msg.attach(image_name, 'image/png', image_content, 'inline', headers=(('Content-ID', '<logo-light>'),))
+
+    msg.body = ('Thank you for signing up for Chained metrics. Please go to the below url '
+                f'in your browser to verify your email\n\n')
+
 
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
