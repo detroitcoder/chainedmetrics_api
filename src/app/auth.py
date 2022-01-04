@@ -17,8 +17,8 @@ auth_bp = Blueprint('auth', __name__)
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
 
-    email = jwt_data["sub"]
-    return User.query.filter_by(email=email, active=True).one_or_none()
+    id = jwt_data["sub"]
+    return User.query.filter_by(id=id, active=True).one_or_none()
 
 @jwt.expired_token_loader
 def exipred_token_callback(jwt_header, jwt_payload):
@@ -63,7 +63,7 @@ def login():
         return jsonify(dict(message='Wrong username or password')), 401
     else:
         access_token = create_access_token(
-            identity=email,
+            identity=user.id,
             expires_delta=timedelta(days=7)
         )
 
@@ -139,7 +139,7 @@ def add_user():
 
     email = request.json.get('email').lower().strip()
     password = request.json.get('password')
-    username = request.json.get('username')
+    username = request.json.get('username', '')
     address = request.json.get('address', '').strip()
     notifications_market_events = request.json.get('notifications_market_events', False)
     notifications_portfolio_events = request.json.get('notifications_portfolio_events', False)
@@ -168,6 +168,79 @@ def add_user():
         subscribe_to_mailchimp_async(email)
 
         return jsonify(message=f'Email verification sent to {email}')
+
+@auth_bp.route('/user', methods=['PUT'])
+@jwt_required()
+def update_user():
+    '''
+    Requests to update a user's settings
+
+    Used to initially create the account
+    ---
+    requestBody:
+        required: true
+        description: Required fields for the user
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        email:
+                            type: string
+                        password:
+                            type: string
+                        username:
+                            type: string
+                        address:
+                            type: string
+                        notifications_portfolio_events:
+                            type: boolean
+                        notifications_market_events:
+                            type: boolean
+
+    responses:
+        200:
+            description: Success message
+        400:
+            description: Validation Error
+        401:
+            description: Not an Admin user
+    '''
+
+    email = request.json.get('email')
+    username = request.json.get('username')
+    address = request.json.get('address')
+    notifications_market_events = request.json.get('notifications_market_events')
+    notifications_portfolio_events = request.json.get('notifications_portfolio_events')
+
+    if email:
+        email = email.lower().strip()
+        if User.query.filter_by(email=email).one_or_none() and current_user.email != email:
+            return jsonify(message='Email is already in use'), 400
+        current_user.email = email
+    
+    if username:
+        username = username.strip().lower()
+        if User.query.filter_by(username=username).one_or_none() and current_user.username != username:
+            return jsonify(message='Username is already in use'), 400
+        current_user.username = username
+    
+    if address:
+        address = address.strip()
+        if User.query.filter_by(address=address).one_or_none() and current_user.address != address:
+            return jsonify(message='Address is already in use'), 400
+        current_user.address = address
+
+    if isinstance(notifications_market_events, bool):
+        current_user.notifications_market_events = notifications_market_events
+    
+    if isinstance(notifications_portfolio_events, bool):
+        current_user.notifications_portfolio_events = notifications_portfolio_events
+    
+    db.session.commit()
+
+    return jsonify(message='Updated user settings')
+
 
 @auth_bp.route('/verifyuser', methods=['POST'])
 def verify_user():
