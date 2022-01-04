@@ -92,8 +92,11 @@ def user():
         last_name=current_user.last_name,
         active=current_user.active,
         created_on=current_user.created_on,
+        address=current_user.address,
         matic_recieved=current_user.matic_recieved,
-        matic_recieved_date=current_user.matic_recieved_date
+        matic_recieved_date=current_user.matic_recieved_date,
+        notifications_portfolio_events=current_user.notifications_portfolio_events,
+        notifications_market_events=current_user.notifications_market_events
     )
 
 @auth_bp.route('/user', methods=['POST'])
@@ -120,6 +123,13 @@ def add_user():
                             type: string
                         last_name:
                             type: string
+                        address:
+                            type: string
+                        notifications_portfolio_events:
+                            type: boolean
+                        notifications_market_events:
+                            type: boolean
+
     responses:
         200:
             description: Success message
@@ -133,13 +143,25 @@ def add_user():
     first_name = request.json.get('first_name')
     last_name = request.json.get('last_name')
     password = request.json.get('password')
+    address = request.json.get('address', '').strip()
+    notifications_market_events = request.json.get('notifications_market_events', False)
+    notifications_portfolio_events = request.json.get('notifications_portfolio_events', False)
 
-    if not all((email, first_name, last_name, password)):
+    if not all((email, password)):
         return jsonify(message="All required arguments must be filled out"), 400
+    elif not all((isinstance(notifications_market_events, bool), isinstance(notifications_portfolio_events, bool))):
+        return jsonify(message="Notification flags muss be boolean")
     elif User.query.filter_by(email=email).one_or_none():
         return jsonify(message="An account with this email already exists"), 400
     else:
-        user = User(email=email, admin=False, active=False, first_name=first_name, last_name=last_name)
+        user = User(
+            email=email, admin=False, active=False, first_name=first_name, 
+            address=address,
+            last_name=last_name, 
+            notifications_market_events = notifications_market_events,
+            notifications_portfolio_events=notifications_portfolio_events, 
+        )
+
         user.set_password(password)
 
         db.session.add(user)
