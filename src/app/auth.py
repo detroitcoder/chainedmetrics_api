@@ -119,9 +119,7 @@ def add_user():
                             type: string
                         password:
                             type: string
-                        first_name:
-                            type: string
-                        last_name:
+                        username:
                             type: string
                         address:
                             type: string
@@ -140,9 +138,8 @@ def add_user():
     '''
 
     email = request.json.get('email').lower().strip()
-    first_name = request.json.get('first_name')
-    last_name = request.json.get('last_name')
     password = request.json.get('password')
+    username = request.json.get('username')
     address = request.json.get('address', '').strip()
     notifications_market_events = request.json.get('notifications_market_events', False)
     notifications_portfolio_events = request.json.get('notifications_portfolio_events', False)
@@ -155,9 +152,8 @@ def add_user():
         return jsonify(message="An account with this email already exists"), 400
     else:
         user = User(
-            email=email, admin=False, active=False, first_name=first_name, 
+            email=email, admin=False, active=False, username=username, 
             address=address,
-            last_name=last_name, 
             notifications_market_events = notifications_market_events,
             notifications_portfolio_events=notifications_portfolio_events, 
         )
