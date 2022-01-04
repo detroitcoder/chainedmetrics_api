@@ -8,9 +8,6 @@ from sqlalchemy.exc import IntegrityError
 from .models import User, MaticFaucetQueue, db
 from .auth import jwt
 
-from .utilities import (send_verification_email, send_resetpassword_email, 
-                            subscribe_to_mailchimp_async, subscribe_to_mailchimp)
-
 
 faucet_bp = Blueprint('faucet', __name__)
 
