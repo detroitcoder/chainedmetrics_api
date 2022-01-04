@@ -66,7 +66,8 @@ class User(db.Model):
     matic_recieved = db.Column(db.Numeric, nullable=True)
     matic_recieved_date = db.Column(db.DateTime, nullable=True)
     notifications_portfolio_events = db.Column(db.Boolean, default=False)
-    notifications_market_events = db.Column(db.Boolean, default=False)    
+    notifications_market_events = db.Column(db.Boolean, default=False)  
+    username = db.Column(db.Text, nullable=True)  
 
     def set_password(self, password):
         """Create hashed password."""
