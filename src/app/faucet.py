@@ -11,18 +11,6 @@ from .auth import jwt
 
 faucet_bp = Blueprint('faucet', __name__)
 
-@jwt.user_lookup_loader
-def user_lookup_callback(_jwt_header, jwt_data):
-
-    email = jwt_data["sub"]
-    return User.query.filter_by(email=email, active=True).one_or_none()
-
-@jwt.expired_token_loader
-def exipred_token_callback(jwt_header, jwt_payload):
-
-    return jsonify(message='Token has expired. Refresh using the /auth/login endpoint'), 401
-
-
 
 @faucet_bp.route('/requestmatic', methods=['POST'])
 @jwt_required()
