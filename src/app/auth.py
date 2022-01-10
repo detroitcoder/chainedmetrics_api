@@ -102,8 +102,8 @@ def user():
 @auth_bp.route('/user', methods=['POST'])
 def add_user():
     '''
-    Requests to add a user and if the payload is correct an email is sent to the user which requires them to verify
-    the email address.
+    Add new user
+    Requests to add a user and if the payload is correct an email is sent to the user which requires them to verify the email address.
 
     Used to initially create the account
     ---
@@ -173,6 +173,7 @@ def add_user():
 @jwt_required()
 def update_user():
     '''
+    Update User Settings
     Requests to update a user's settings
 
     Used to initially create the account
