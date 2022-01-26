@@ -9,7 +9,7 @@ from flask_jwt_extended import JWTManager
 
 from web3.auto import w3
 from eth_account.messages import defunct_hash_message
-from eth_keys.exceptions import BadSignature
+from eth_keys.exceptions import BadSignature, ValidationError
 
 from .models import RequestAccess, User, db
 from .utilities import (send_verification_email, send_resetpassword_email, 
@@ -101,7 +101,7 @@ def login2():
         200:
             description: Successful response with the JWT as access_token
         401:
-            description: Incorrect user name or password
+            description: Incorrect address or signature
     '''
 
     address = request.json.get('address')
@@ -120,7 +120,7 @@ def login2():
     # Verify the signature matches the address and message hash
     try:
         signer = w3.eth.account.recoverHash(message_hash, signature=signature)
-    except BadSignature:
+    except BadSignature, ValidationError:
         return jsonify(dict(message='Invalid signature')), 401
 
     if signer != address:
