@@ -1,10 +1,15 @@
 import os
+import time
 
 from flask import Blueprint, jsonify, request, current_app
 from datetime import timedelta
 from flask_jwt_extended import create_access_token, current_user, jwt_required, decode_token
 from jwt.exceptions import ExpiredSignatureError, DecodeError, InvalidTokenError
 from flask_jwt_extended import JWTManager
+
+from web3.auto import w3
+from eth_account.messages import defunct_hash_message
+from eth_keys.exceptions import BadSignature
 
 from .models import RequestAccess, User, db
 from .utilities import (send_verification_email, send_resetpassword_email, 
@@ -17,8 +22,9 @@ auth_bp = Blueprint('auth', __name__)
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
 
-    id = jwt_data["sub"]
-    return User.query.filter_by(id=id, active=True).one_or_none()
+    address = jwt_data["sub"]
+    
+    return User.query.filter_by(address=address).one_or_none()
 
 @jwt.expired_token_loader
 def exipred_token_callback(jwt_header, jwt_payload):
@@ -64,6 +70,71 @@ def login():
     else:
         access_token = create_access_token(
             identity=user.id,
+            expires_delta=timedelta(days=7)
+        )
+
+        return jsonify(dict(message='Success', access_token=access_token))
+
+@auth_bp.route('/login2', methods=['POST'])
+def login2():
+    '''
+    Logs a user into chainedmetrics with web3 signature and retuns a JWT token valid for 7 days
+
+    Endpoint for Logging into chained metrics using a web3 signature and their \
+    address. A JWT token is returned and is then required to be in \
+    the header of all restricted endpoints.
+
+    ---
+    requestBody:
+        required: true
+        description: The user's email and passsword for chained metrics
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        address:
+                            type: string
+                        signature:
+                            type: string
+    responses:
+        200:
+            description: Successful response with the JWT as access_token
+        401:
+            description: Incorrect user name or password
+    '''
+
+    address = request.json.get('address')
+    signature = request.json.get('signature')
+
+    if not address or not signature:
+        return jsonify(dict(message='No signature provided')), 401
+
+    # Construct the expected message hash from the address and signature
+    now = time.time()
+    rounded_now = now - (now % 600)
+    domain = request.headers.get('Host')
+    message = 'Signing in to {} at {:.0f}'.format(domain, rounded_now)
+    message_hash = defunct_hash_message(text=message)
+
+    # Verify the signature matches the address and message hash
+    try:
+        signer = w3.eth.account.recoverHash(message_hash, signature=signature)
+    except BadSignature:
+        return jsonify(dict(message='Invalid signature')), 401
+
+    if signer != address:
+        return jsonify(dict(message='Wrong signature')), 401
+    else:
+        user = User.query.filter_by(address=address).one_or_none()
+
+        if not user:
+            user = User(address=address, active=True)
+            db.session.add(user)
+            db.session.commit()
+
+        access_token = create_access_token(
+            identity=user.address,
             expires_delta=timedelta(days=7)
         )
 
