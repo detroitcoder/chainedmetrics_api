@@ -122,14 +122,14 @@ def login2():
     print('expected_message:', message)
     print('user_message:', user_message)
     print('messages equal:', message == user_message)
-    print('user_address', address)
+    print('user_address:', address)
     # Verify the signature matches the address and message hash
     try:
         signer = w3.eth.account.recoverHash(message_hash, signature=signature)
     except (BadSignature, ValidationError):
         return jsonify(dict(message='Invalid signature')), 401
 
-    print('signer_address': signer)
+    print('signer_address:' signer)
     if signer != address:
         return jsonify(dict(message='Wrong signature')), 401
     else:
