@@ -2,11 +2,16 @@ import decimal
 import json
 import requests
 import os
+import smtplib
 
 from threading import Thread
 from datetime import date, datetime
 from flask_mail import Mail, Message
 from flask import current_app
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.encoders import encode_base64
 
 mail = Mail()
 
@@ -126,6 +131,50 @@ def subscribe_to_mailchimp_async(email):
     Thread(target=subscribe_to_mailchimp, args=(email,)).start()
 
 
+def send_email(email, subject, template_name):
+    '''
+    Sends an email to provided email address using a specified template.
+
+    Args:
+        email (str):
+        subject (str): The email subject
+        template_name (str) The name of the template (i.e. "email-verification.html")
+    '''
+    # Create message container - the correct MIME type is multipart/alternative.
+    sender = "serviceaccount@chainedmetrics.com"
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = email
+
+    template_path = os.path.join(os.path.dirname(__file__), 'templates', template_name)
+    with open(template_path) as fil:
+        html = fil.read()
+
+    image_name = 'chained-metrics-light.png'
+    image_location = os.path.join(os.path.dirname(__file__), 'templates', 'images', image_name)
+    with open(image_location, 'rb') as fil:
+        image_content = fil.read()
+
+    # Attach image
+    image = MIMEImage(image_content, 'png')
+    image.add_header('Content-ID', '<logo-light>')
+    msg.attach(image)
+    
+    # Record the MIME types of both parts - text/plain and text/html.
+    part = MIMEText(html, 'html')
+    
+    # Attach parts into message container.
+    msg.attach(part)
+    
+    # Send the message via local SMTP server.
+    mail = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    mail.ehlo()
+    
+    mail.login('serviceaccount@chainedmetrics.com', 'ndvasltkuteifugg')
+    mail.sendmail(sender, email, msg.as_string())
+    mail.quit()
+
 def subscribe_to_mailchimp(email):
     '''
     Adds a user's email to the Mail Chimp News letter
@@ -195,3 +244,4 @@ SWAGGER_TEMPLATE = {
         }
     }
 }
+
