@@ -116,7 +116,7 @@ def login2():
     domain = request.headers.get('Host')
     message = 'Signing in to {} at {:.0f}'.format(domain, rounded_now)
     message_hash = defunct_hash_message(text=message)
-
+    print(message)
     # Verify the signature matches the address and message hash
     try:
         signer = w3.eth.account.recoverHash(message_hash, signature=signature)
