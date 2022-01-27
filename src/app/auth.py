@@ -23,6 +23,9 @@ auth_bp = Blueprint('auth', __name__)
 def user_lookup_callback(_jwt_header, jwt_data):
 
     address = jwt_data["sub"]
+
+    if isinstance(address, int) or len(address) < 42:
+        return None
     
     return User.query.filter_by(address=address).one_or_none()
 
