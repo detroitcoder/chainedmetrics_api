@@ -97,6 +97,8 @@ def login2():
                             type: string
                         signature:
                             type: string
+                        message:
+                            type: string
     responses:
         200:
             description: Successful response with the JWT as access_token
@@ -106,6 +108,7 @@ def login2():
 
     address = request.json.get('address')
     signature = request.json.get('signature')
+    user_message = request.json.get('message')
 
     if not address or not signature:
         return jsonify(dict(message='No signature provided')), 401
@@ -116,13 +119,17 @@ def login2():
     domain = request.headers.get('Host')
     message = 'Signing in to {} at {:.0f}'.format(domain, rounded_now)
     message_hash = defunct_hash_message(text=message)
-    print(message)
+    print('expected_message:', message)
+    print('user_message:', user_message)
+    print('messages equal:', message == user_message)
+    print('user_address', address)
     # Verify the signature matches the address and message hash
     try:
         signer = w3.eth.account.recoverHash(message_hash, signature=signature)
     except (BadSignature, ValidationError):
         return jsonify(dict(message='Invalid signature')), 401
 
+    print('signer_address': signer)
     if signer != address:
         return jsonify(dict(message='Wrong signature')), 401
     else:
