@@ -6,7 +6,7 @@ from datetime import timedelta
 from flask_jwt_extended import create_access_token, current_user, jwt_required, decode_token
 from jwt.exceptions import ExpiredSignatureError, DecodeError, InvalidTokenError
 from flask_jwt_extended import JWTManager
-
+from sqlalchemy.exc import MultipleResultsFound
 from web3.auto import w3
 from eth_account.messages import defunct_hash_message
 from eth_keys.exceptions import BadSignature, ValidationError
@@ -136,7 +136,10 @@ def login2():
     if signer != address:
         return jsonify(dict(message='Wrong signature')), 401
     else:
-        user = User.query.filter_by(address=address).one_or_none()
+        try:
+            user = User.query.filter_by(address=address).one_or_none()
+        except MultipleResultsFound:
+            return jsonify(dict(message='Multiple users found with this address')), 401
 
         if not user:
             user = User(address=address, active=True)
