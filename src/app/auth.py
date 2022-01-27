@@ -129,7 +129,7 @@ def login2():
     except (BadSignature, ValidationError):
         return jsonify(dict(message='Invalid signature')), 401
 
-    print('signer_address:' signer)
+    print('signer_address:', signer)
     if signer != address:
         return jsonify(dict(message='Wrong signature')), 401
     else:
