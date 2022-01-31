@@ -342,7 +342,7 @@ def user(wallet_address):
             description: False value if the user does not exist in the table
     '''
     
-    user = User.query.filter_by(address=wallet_address)
+    user = User.query.filter_by(address=wallet_address).one_or_none()
 
     if user:
         return jsonify(message=True), 200
