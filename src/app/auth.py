@@ -328,7 +328,7 @@ def update_user():
 
 
 @auth_bp.route('/user/<wallet_address>/find', methods=['GET'])
-def user(wallet_address):
+def find_user(wallet_address):
     '''
     Check if a record exists for a user in a database table
     Returns True if a user record exists in the user table and False if it does not
