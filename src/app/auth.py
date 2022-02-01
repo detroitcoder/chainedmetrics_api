@@ -327,6 +327,29 @@ def update_user():
     return jsonify(message='Updated user settings')
 
 
+@auth_bp.route('/user/<wallet_address>/find', methods=['GET'])
+def find_user(wallet_address):
+    '''
+    Check if a record exists for a user in a database table
+    Returns True if a user record exists in the user table and False if it does not
+
+    It DOES NOT require an valid token to be in the header in order to see this information
+    ---
+    responses:
+        200:
+            description: True if the user does exist in the table
+        204:
+            description: False value if the user does not exist in the table
+    '''
+    
+    user = User.query.filter_by(address=wallet_address).one_or_none()
+
+    if user:
+        return jsonify(message=True), 200
+
+    return jsonify(message=False), 204
+
+
 @auth_bp.route('/verifyuser', methods=['POST'])
 def verify_user():
     '''
