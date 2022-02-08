@@ -7,6 +7,7 @@ from flask_jwt_extended.exceptions import NoAuthorizationError
 
 from .markets import markets_bp
 from .auth import auth_bp, jwt
+from .faucet import faucet_bp
 from .models import db
 from .utilities import CustomJSONEncoder, SWAGGER_TEMPLATE, mail
 
@@ -43,6 +44,7 @@ def create_app(testing_config=None):
 
     app.register_blueprint(markets_bp, url_prefix='/markets')
     app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(faucet_bp, url_prefix='/faucet')
     app.url_map.strict_slashes = False
 
 
