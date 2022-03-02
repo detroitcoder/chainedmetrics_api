@@ -120,7 +120,7 @@ def login2():
     now = time.time()
     rounded_now = now - (now % 600)
     domain = request.headers.get('Host')
-    message = 'Connecting to {} at {:.0f}. By connecting your wallet, you agree to our Terms of Use and Privacy Policy, which can be viewed at chainedmetrics.com/terms and chainedmetrics.com/privacy.'.format(domain, rounded_now)
+    message = 'By signing this message you are signing into {} at {:.0f}.'.format(domain, rounded_now)
     message_hash = defunct_hash_message(text=message)
     print('expected_message:', message)
     print('user_message:', user_message)
