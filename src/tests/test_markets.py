@@ -114,7 +114,10 @@ def get_test_markets():
                 elif i in date_indices:
                     values.append(parser.parse(v.strip()).date())
                 else:
-                    values.append(eval(v.strip()))
+                    try:
+                        values.append(eval(v.strip()))
+                    except (NameError, SyntaxError):
+                        values.append(v.strip())
 
             row_dict = dict(zip(headers,values))
             row_dict = {k:v for k, v in row_dict.items() if v is not None}
