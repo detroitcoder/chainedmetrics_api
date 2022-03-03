@@ -30,6 +30,12 @@ class Market(db.Model):
     high_string = db.Column(db.String)
     low = db.Column(db.Numeric)
     low_string = db.Column(db.String)
+    tick_size = db.Column(db.Numeric)
+    unit_abbr = db.Column(db.String)
+    unit_desc = db.Column(db.String)
+    company_name = db.Column(db.String)
+    about = db.Column(db.String)
+
     
     CheckConstraint(
         '''(high is not null and high_string is not null and low is not null and low_string is not null and value is null and value_string is null) 
