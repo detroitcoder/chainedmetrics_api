@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 from cachetools import cached, TTLCache
 from .models import Market
+from .analytics import get_historical_prices
 
 
 markets_bp = Blueprint('markets', __name__)
@@ -64,6 +65,47 @@ def get_metric_value(market, ticker, fiscal_period, metric):
     else:
         return jsonify(message='Success', value=value)
 
+
+@markets_bp.route('/historical_prices/<int:market>')
+def historical_prices(market):
+    '''
+    Endpoint for returning KPI values
+    ---
+    parameters:
+      - name: market
+        in: path
+        type: integer
+        required: true
+    responses:
+        200:
+            description: An array of historical prices and transactions
+        202:
+            description: The market does exist but the Value has not been set yet
+        400:
+            description: The request arguments in the URL were invalid
+        404:
+            description: The requested market does not exist
+    '''
+
+    if not market:
+        return jsonify(message='All paramaters must be specified'), 400
+    
+    market = Market.query.filter_by(id=market).one_or_none()
+    if market is None:
+        return jsonify(message='This KPI Market does not exist'), 404
+    else:
+        print(market.beat_address)
+        print(market.miss_address)
+        historical_data = get_historical_prices(
+            market.broker_address.strip().lower(), 
+            market.high,
+            market.low,
+            '0x79ec35384829ba7a75759a057693ce103b077bb1', #collateral_token
+            market.beat_address.strip().lower(),
+            market.miss_address.strip().lower(),
+            current_app.config['POLYGONSCAN_TOKEN'])
+
+        return jsonify(message='Success', value=historical_data)
 
 # set ttl = 5 minutes (300 seconds)
 @cached(cache=TTLCache(maxsize=10, ttl=300))
