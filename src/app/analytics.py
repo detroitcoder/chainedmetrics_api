@@ -140,23 +140,24 @@ class Transaction(object):
 
         assert self.isCompleteTransaction(), 'Incomplete transaction'
 
-        buyer = self.collateral_transfer['from']
         time = str(datetime.datetime.fromtimestamp(int(self.collateral_transfer['timeStamp'])))
-        quantity = self.collateral_transfer['value']
+        investmentAmount = int(self.collateral_transfer['value'])
         orderType = 'long' if self.return_transfer['contractAddress'] == self.long_address else 'short'
         
         try:
-            pricePerToken = float(self.collateral_transfer['value']) / int(self.return_transfer['value'])
+            pricePerToken = float(investmentAmount) / int(self.return_transfer['value'])
         except ZeroDivisionError:
             pricePerToken = 0
         
         return {
-            'buyer': buyer,
+            'account': self.collateral_transfer['from'],
             'time': time,
-            'quantity': quantity,
+            'investmentAmount': investmentAmount,
             'orderType': orderType,
             'pricePerToken': pricePerToken,
-            'transactionType': 'buy'
+            'transactionType': 'buy',
+            'returnAmount': int(self.return_transfer['value']),
+            'isComplete': 'True'
         }
 
     def transferAmount(self):
@@ -166,9 +167,6 @@ class Transaction(object):
         
         long, short = 0, 0
         for txn in self.all_transactions:
-            print(self.amm_address)
-            print(txn['from'])
-            print(txn['to'])
             if txn.get('from') == self.amm_address:
                 if txn.get('contractAddress') == self.long_address:
                     long -= int(txn['value'])
@@ -183,12 +181,64 @@ class Transaction(object):
 
         return long, short
 
-def get_historical_prices(amm_address, high, low, collateral, long, short, api_token):
+def calc_pnl(transactions, long_price=None, short_price=None):
+    '''
+    Calculates the PnL from the transactions for a market for each address
+
+    Arguments:
+        transactions (list): Output from get_historical_transactions for a market
+        long_price (float): Price of the long token
+        short_price (float): Price of the short token
+
+    Returns:
+        dict: Dictionary of PnL for each address
+    
+    Notes:
+        If long_price and short_price are not provided, the prices from the last transaction are used
+    '''
+
+    pnl = defaultdict(lambda: 0)
+    balances = {'long': defaultdict(lambda: 0), 'short': defaultdict(lambda: 0)}
+
+    if long_price is None:
+        long_price, short_price = transactions[-1]['longPrice'], 1 - transactions[-1]['longPrice']
+        
+    for txn in transactions:
+        account = txn['account']
+        if txn.get('isComplete') == 'True':
+            if txn['transactionType'] == 'buy':
+                if txn['orderType'] == 'long':
+                    pnl[account] -= txn['investmentAmount']
+                    balances['long'][account] += txn['returnAmount']
+                elif txn['orderType'] == 'short':
+                    pnl[account] -= txn['investmentAmount']
+                    balances['short'][account] += txn['returnAmount']
+            elif txn['transactionType'] == 'sell':
+                if txn['orderType'] == 'long':
+                    pnl[account] += txn['returnAmount']
+                    balances['long'][account] -= txn['investmentAmount']
+                elif txn['orderType'] == 'short':
+                    pnl[account] += txn['returnAmount']
+                    balances['long'][account] += txn['investmentAmount']
+            
+    for (acc, bal) in balances['long'].items():
+        pnl[acc] += bal * long_price
+        
+    for (acc, bal) in balances['short'].items():
+        pnl[acc] += bal * short_price
+
+    return pnl
+
+def get_historical_transactions(amm_address, high, low, collateral, long, short, api_token, date=None):
 
     amm = AMM(high, low)
     transaction_dict = call_polyscan_api(amm_address, api_token)
     transaction = Transaction(amm_address, collateral, long, short, transaction_dict['result'][0]['hash'])
     for txn in transaction_dict['result']:
+        # Filter out transacitons before date
+        if date is not None and int(txn['timeStamp']) < date:
+            continue
+
         if txn['hash'] != transaction.hash:
             amm.process_transaction(transaction)
             transaction = Transaction(amm_address, collateral, long, short, txn['hash'])
