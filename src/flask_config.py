@@ -13,6 +13,8 @@ class Config(object):
     MAIL_USE_SSL = True
     MAIL_USERNAME = 'serviceaccount@chainedmetrics.com'
     MAIL_PASSWORD = os.environ['GMAIL_PASS']
+    POLYGONSCAN_TOKEN = os.environ['POLYGONSCAN_TOKEN']
+
 
 class Production(Config):
     DEVELOPMENT = False
