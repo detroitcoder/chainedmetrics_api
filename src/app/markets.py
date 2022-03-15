@@ -1,7 +1,9 @@
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, jsonify, current_app, request
 from cachetools import cached, TTLCache
 from .models import Market
-from .analytics import get_historical_prices
+from .analytics import get_historical_transactions, calc_pnl
+from collections import defaultdict
+from dateutil.parser import parse
 
 
 markets_bp = Blueprint('markets', __name__)
@@ -94,9 +96,7 @@ def historical_prices(market):
     if market is None:
         return jsonify(message='This KPI Market does not exist'), 404
     else:
-        print(market.beat_address)
-        print(market.miss_address)
-        historical_data = get_historical_prices(
+        historical_data = get_historical_transactions(
             market.broker_address.strip().lower(), 
             market.high,
             market.low,
@@ -106,6 +106,73 @@ def historical_prices(market):
             current_app.config['POLYGONSCAN_TOKEN'])
 
         return jsonify(message='Success', value=historical_data)
+
+@markets_bp.route('/pnl')
+def pnl():
+    '''
+    Endpoint for querrying PNL values based on different filters such as ticker, date and market
+    ---
+    parameters:
+      - name: ticker
+        in: query
+        type: string
+        required: false
+      - name: date
+        in: query
+        type: string
+        required: false
+      - name: marketId
+        in: query
+        type: integer
+        required: false
+    responses:
+        200:
+            description: A sorted array of PNL based on the filter with the address and PnL
+        400:
+            description: The request arguments in the URL were invalid
+        404:
+            description: The requested market does not exist
+    '''
+
+    ticker = request.args.get('ticker')
+    date = request.args.get('date')
+    marketId = request.args.get('marketId')
+
+    print(ticker, date, marketId)
+
+    if date:
+        try:
+            date = parse(date).timestamp()
+        except ValueError:
+            return jsonify(message='Invalid date format'), 400
+
+    markets = Market.query.filter(Market.low > 0)
+    if ticker:
+        markets = markets.filter(Market.ticker==ticker)
+    if marketId:
+        markets = markets.filter(Market.id==marketId)
+
+    pnl = defaultdict(lambda: 0)
+    for market in markets:
+        historical_data = get_historical_transactions(
+            market.broker_address.strip().lower(), 
+            market.high,
+            market.low,
+            '0x79ec35384829ba7a75759a057693ce103b077bb1', #collateral_token
+            market.beat_address.strip().lower(),
+            market.miss_address.strip().lower(),
+            current_app.config['POLYGONSCAN_TOKEN'],
+            date)
+
+        print(historical_data)
+        
+        transaction_pnl = calc_pnl(historical_data)
+        for address, pnl_value in transaction_pnl.items():
+            pnl[address] += pnl_value
+        
+    results = sorted(pnl.items(), key=lambda x: x[1], reverse=True)
+    
+    return jsonify(message='Success', value=results)
 
 # set ttl = 5 minutes (300 seconds)
 @cached(cache=TTLCache(maxsize=10, ttl=300))
