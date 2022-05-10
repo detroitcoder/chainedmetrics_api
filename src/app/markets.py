@@ -4,6 +4,7 @@ from .models import Market
 from .analytics import get_historical_transactions, calc_pnl
 from collections import defaultdict
 from dateutil.parser import parse
+from random import randint
 
 
 markets_bp = Blueprint('markets', __name__)
@@ -225,5 +226,23 @@ def get_markets():
     markets = Market.query.all()
     markets = Market.query.filter(Market.beat_address.isnot(None)).all()
     markets = [{k: v for k, v in row.__dict__.items() if not k.startswith('_')} for row in markets]
+    for m in markets:
+        m['chartData'] = get_historical_data_for_spark()
 
     return markets
+
+def get_historical_data_for_spark():
+    '''
+    Retuns random data for the spark charts on the web page
+    '''
+    
+    lst = [50]
+    for i in range(100):
+        if randint(0, 4) == 0:
+            lst.append(lst[-1] + randint(-35, 30))
+        else:
+            lst.append(lst[-1] + randint(-6, 10))
+    return lst
+        
+        
+
