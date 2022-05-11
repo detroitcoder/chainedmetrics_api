@@ -262,7 +262,7 @@ def get_fake_historical_transactions(high, low, beat_price):
     start = datetime.now() - timedelta(hours=randint(1, 3))
     transactions = [{
         'time': start.strftime('%Y-%m-%d %T'),
-        'forecastedValue': low + (high-low) / 2,
+        'forecastedValue': beat_price,
         'investmentAmount': randint(1000, 50000)
     }]
     
@@ -279,7 +279,7 @@ def get_fake_historical_transactions(high, low, beat_price):
             else:
                 last_time = next_time - timedelta(minutes=randint(10,120))
 
-            percent = (randint(1, 6) / 100)
+            percent = (randint(1, 4) / 100)
             if up:
                 last_value = (high - next_value) * percent + next_value
             else:
