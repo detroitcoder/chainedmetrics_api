@@ -5,6 +5,7 @@ from .analytics import get_historical_transactions, calc_pnl
 from collections import defaultdict
 from dateutil.parser import parse
 from random import randint
+from datetime import datetime, timedelta
 
 
 markets_bp = Blueprint('markets', __name__)
@@ -97,16 +98,23 @@ def historical_prices(market):
     if market is None:
         return jsonify(message='This KPI Market does not exist'), 404
     else:
-        historical_data = get_historical_transactions(
-            market.broker_address.strip().lower(), 
+        historical_data =  get_fake_historical_transactions(
             market.high,
             market.low,
-            '0x79ec35384829ba7a75759a057693ce103b077bb1', #collateral_token
-            market.beat_address.strip().lower(),
-            market.miss_address.strip().lower(),
-            current_app.config['POLYGONSCAN_TOKEN'])
-
+            market.beat_price
+        )
         return jsonify(message='Success', value=historical_data)
+        # Comment out historical trasnsaction to better simulate data
+        # historical_data = get_historical_transactions(
+        #     market.broker_address.strip().lower(), 
+        #     market.high,
+        #     market.low,
+        #     '0x79ec35384829ba7a75759a057693ce103b077bb1', #collateral_token
+        #     market.beat_address.strip().lower(),
+        #     market.miss_address.strip().lower(),
+        #     current_app.config['POLYGONSCAN_TOKEN'])
+
+        # return jsonify(message='Success', value=historical_data)
 
 @markets_bp.route('/pnl')
 def pnl():
@@ -235,7 +243,7 @@ def get_historical_data_for_spark():
     '''
     Retuns random data for the spark charts on the web page
     '''
-    
+
     lst = [50]
     for i in range(100):
         if randint(0, 4) == 0:
@@ -244,5 +252,56 @@ def get_historical_data_for_spark():
             lst.append(lst[-1] + randint(-6, 10))
     return lst
         
+def get_fake_historical_transactions(high, low, beat_price):
+    '''
+    Generates fake historical transaction data for more realistic simulations
+    
+    '''
+    high = float(high)
+    low = float(low)
+    start = datetime.now() - timedelta(hours=randint(1, 3))
+    transactions = [{
+        'time': start.strftime('%Y-%m-%d %T'),
+        'forecastedValue': low + (high-low) / 2,
+        'investmentAmount': randint(1000, 50000)
+    }]
+    
+    for i in range(50):
+
+        up = randint(0, 9) <= 3
+        for i in range(7):
+            next_trans = transactions[-1]
+            next_time = parse(next_trans['time'])
+            next_value = float(next_trans['forecastedValue'])
+            
+            if randint(0, 6) == 0:
+                last_time = next_time - timedelta(hours=randint(2,48), minutes=randint(1, 15))
+            else:
+                last_time = next_time - timedelta(minutes=randint(10,120))
+
+            percent = (randint(1, 15) / 100)
+            if up:
+                last_value = (high - next_value) * percent + next_value
+            else:
+                last_value = next_value - (next_value - low) * percent
+
+            investment_amount = int(50000 * percent)
+
+            transactions.append({
+                'time': last_time.strftime('%Y-%m-%d %T'),
+                'forecastedValue': last_value,
+                'investmentAmount': investment_amount
+            })
+            print(percent, up, last_time, last_value, investment_amount)
+
+    transactions.reverse()
+    return transactions
         
+        
+
+
+        
+
+    
+     
 
