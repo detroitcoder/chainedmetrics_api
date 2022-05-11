@@ -285,7 +285,7 @@ def get_fake_historical_transactions(high, low, beat_price):
             else:
                 last_value = next_value - (next_value - low) * percent
 
-            investment_amount = int(50000 * percent)
+            investment_amount = int(150000 * percent)
 
             transactions.append({
                 'time': last_time.strftime('%Y-%m-%d %T'),
