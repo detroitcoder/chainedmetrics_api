@@ -255,7 +255,7 @@ def get_historical_data_for_spark():
 def get_fake_historical_transactions(high, low, beat_price):
     '''
     Generates fake historical transaction data for more realistic simulations
-    
+
     '''
     high = float(high)
     low = float(low)
@@ -279,7 +279,7 @@ def get_fake_historical_transactions(high, low, beat_price):
             else:
                 last_time = next_time - timedelta(minutes=randint(10,120))
 
-            percent = (randint(1, 15) / 100)
+            percent = (randint(1, 6) / 100)
             if up:
                 last_value = (high - next_value) * percent + next_value
             else:
