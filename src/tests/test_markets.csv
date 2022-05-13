@@ -1,5 +1,5 @@
-id,closed,fiscal_period,metric,ticker,value_string,value,beat_address,beat_price,miss_address,broker_address,miss_price,issued,resolved_value,highlight_market,metric_symbol,expected_reporting_date
-3,False,"""FQ2 2022""","""Global Subscribers""","""NFLX""","""2.3 M""",2300000,"""XYZ""",0,"""ABC""","""123""",0,10,,True,"""NFLX/Q222/GS""",2021-12-31
-2,False,"""FQ1 2022""","""Revenue""","""GOOG""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,,False,"""GOOG/Q122/R""",2021-12-31
-1,False,"""FQ1 2022""","""Revenue""","""AMZN""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,1100000000,False,"""AMZN/Q122/R""",2021-12-31
-4,False,"""FQ3 2022""","""Revenue""","""AMZN""","""$1,000 B""",1000000000,,0,,,0,10,1100000000,False,"""AMZN/Q322/R""",2021-12-31
+id,closed,fiscal_period,metric,ticker,value_string,value,beat_address,beat_price,miss_address,broker_address,miss_price,issued,resolved_value,highlight_market,metric_symbol,expected_reporting_date,tick_size,unit_abbr,unit_desc,company_name,about
+3,False,"""FQ2 2022""","""Global Subscribers""","""NFLX""","""2.3 M""",2300000,"""XYZ""",0,"""ABC""","""123""",0,10,,True,"""NFLX/Q222/GS""",2021-12-31,0.001,B,Billions,Apple,This is a long form description
+2,False,"""FQ1 2022""","""Revenue""","""GOOG""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,,False,"""GOOG/Q122/R""",2021-12-31,0.001,M,Millions,Microsoft,That can be any length
+1,False,"""FQ1 2022""","""Revenue""","""AMZN""","""$1,000 B""",1000000000,"""XYZ""",0,"""ABC""","""123""",0,10,1100000000,False,"""AMZN/Q122/R""",2021-12-31,1,USD,US Dollars,Swiss Cheese,And it describes this market
+4,False,"""FQ3 2022""","""Revenue""","""AMZN""","""$1,000 B""",1000000000,,0,,,0,10,1100000000,False,"""AMZN/Q322/R""",2021-12-31,100,People,People,General Motors,With plenty of details
